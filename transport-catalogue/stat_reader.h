@@ -16,7 +16,7 @@ using std::vector;
 
 ostream& operator<<(ostream& out, const BusInfo& bus_info);
 
-std::pair<string_view, string_view> ParseQuery(const string_view request);
+std::pair<string_view, string_view> ParseQuery(string_view request);
 
 void ParseAndPrintStat(const TransportCatalogue& transport_catalogue, std::string_view request,
                        std::ostream& output);
