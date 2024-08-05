@@ -12,27 +12,6 @@ using std::string_view;
 using std::vector;
 
 /**
- * Парсит строку вида "10.123,  -30.1837" и возвращает пару координат (широта, долгота)
- */
-Coordinates ParseCoordinates(string_view str) {
-    static const double nan = std::nan("");
-
-    auto not_space = str.find_first_not_of(' ');
-    auto comma = str.find(',');
-
-    if (comma == str.npos) {
-        return {nan, nan};
-    }
-
-    auto not_space2 = str.find_first_not_of(' ', comma + 1);
-
-    double lat = std::stod(string(str.substr(not_space, comma - not_space)));
-    double lng = std::stod(string(str.substr(not_space2)));
-
-    return {lat, lng};
-}
-
-/**
  * Удаляет пробелы в начале и конце строки
  */
 string_view Trim(string_view string) {
@@ -46,19 +25,22 @@ string_view Trim(string_view string) {
 /**
  * Разбивает строку string на n строк, с помощью указанного символа-разделителя delim
  */
-vector<string_view> Split(string_view string, char delim) {
+vector<string_view> Split(string_view string, string_view delim) {
     vector<string_view> result;
 
     size_t pos = 0;
-    while ((pos = string.find_first_not_of(' ', pos)) < string.length()) {
+    while (pos < string.length()) {
         auto delim_pos = string.find(delim, pos);
+
         if (delim_pos == string.npos) {
             delim_pos = string.size();
         }
+
         if (auto substr = Trim(string.substr(pos, delim_pos - pos)); !substr.empty()) {
             result.push_back(substr);
         }
-        pos = delim_pos + 1;
+
+        pos = delim_pos + delim.size();
     }
 
     return result;
@@ -71,10 +53,10 @@ vector<string_view> Split(string_view string, char delim) {
  */
 vector<string_view> ParseRoute(string_view route) {
     if (route.find('>') != route.npos) {
-        return Split(route, '>');
+        return Split(route, ">");
     }
 
-    auto stops = Split(route, '-');
+    auto stops = Split(route, "-");
     vector<string_view> results(stops.begin(), stops.end());
     results.insert(results.end(), std::next(stops.rbegin()), stops.rend());
 
@@ -113,8 +95,32 @@ void InputReader::ApplyCommands([[maybe_unused]] TransportCatalogue& catalogue) 
     for(const auto& command : commands_) {
         
         if(command.command == "Stop"sv) {
-            Coordinates coordinates = ParseCoordinates(command.description);
-            catalogue.AddStop(command.id, coordinates);
+            vector<string_view> buffer_for_queries = Split(command.description, ",");
+
+            if(buffer_for_queries.empty() || buffer_for_queries.size() < 2) {
+                continue;
+            }
+
+            double latitude = std::stod(string(buffer_for_queries[0]));
+            double longitude = std::stod(string(buffer_for_queries[1]));
+
+            std::unordered_map<string, double> distances_to_stops_info;
+            for(size_t i = 2; i < buffer_for_queries.size(); ++i) {
+                auto distance_to_stop = Split(buffer_for_queries[i], "m to ");
+
+                double distance = std::stod(string(distance_to_stop[0]));
+                string stop_to = string(distance_to_stop[1]);
+
+                distances_to_stops_info.insert({stop_to, distance});
+            }
+
+            catalogue.AddStop(command.id, Coordinates{latitude, longitude}, move(distances_to_stops_info));
+        }
+    }
+
+    for(const auto& command : commands_) {
+        if(command.command == "Stop"sv) {
+            catalogue.AddDistance(command.id);
         }
     }
 
