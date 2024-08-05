@@ -12,14 +12,15 @@ ostream& operator<<(ostream& out, const BusInfo& bus_info) {
     out << "Bus "s << bus_info.bus << ": "s;
     out << bus_info.stops_on_route << " stops on route, "s;
     out << bus_info.unique_stops << " unique stops, "s;
-    out << std::setprecision(6) << bus_info.route_length << " route length"s;
+    out << std::setprecision(6) << bus_info.route_info.route_length << " route length, "s;
+    out << bus_info.route_info.route_curvature << " curvature"s;
 
     return out;
 }
 
 std::pair<string_view, string_view> ParseQuery(string_view request) {
     auto space_pos = request.find_first_of(' ');
-    if(space_pos == request.npos){
+    if(space_pos == request.npos) {
         return {};
     }
     
