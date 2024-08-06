@@ -104,23 +104,23 @@ void InputReader::ApplyCommands([[maybe_unused]] TransportCatalogue& catalogue) 
             double latitude = std::stod(string(buffer_for_queries[0]));
             double longitude = std::stod(string(buffer_for_queries[1]));
 
-            std::unordered_map<string, double> distances_to_stops_info;
+            catalogue.AddStop(command.id, Coordinates{latitude, longitude});
+        }
+    }
+
+    for(const auto& command : commands_) {
+        if(command.command == "Stop"sv) {
+            vector<string_view> buffer_for_queries = Split(command.description, ",");
+
             for(size_t i = 2; i < buffer_for_queries.size(); ++i) {
                 auto distance_to_stop = Split(buffer_for_queries[i], "m to ");
 
                 double distance = std::stod(string(distance_to_stop[0]));
                 string stop_to = string(distance_to_stop[1]);
 
-                distances_to_stops_info.insert({stop_to, distance});
+                catalogue.AddDistance(command.id, stop_to, distance);
             }
-
-            catalogue.AddStop(command.id, Coordinates{latitude, longitude}, move(distances_to_stops_info));
-        }
-    }
-
-    for(const auto& command : commands_) {
-        if(command.command == "Stop"sv) {
-            catalogue.AddDistance(command.id);
+            
         }
     }
 

@@ -13,9 +13,8 @@ using std::unordered_map;
 
 using PairStops = std::pair<const Stop*,const Stop*>;
 
-void TransportCatalogue::AddStop(const string& name_stop, const Coordinates& coordinates,
-                                                           std::unordered_map<string, double>&& distance_to_stop) {
-    stops_.push_back({name_stop, coordinates, distance_to_stop});
+void TransportCatalogue::AddStop(const string& name_stop, const Coordinates& coordinates) {
+    stops_.push_back({name_stop, coordinates});
 
     buses_for_stop_[stops_.back().name_stop];
     stopname_to_stop_[stops_.back().name_stop] = &stops_.back();
@@ -35,15 +34,11 @@ void TransportCatalogue::AddBus(const string& name_bus, const vector<string_view
     buses_.back().stops_for_bus = move(stops_for_bus);
 }
 
-void TransportCatalogue::AddDistance(string_view stop_from) { 
+void TransportCatalogue::AddDistance(string_view stop_from, string_view stop_to, double distance) { 
     const auto ptr_stop_from = FindStop(stop_from);
+    const auto ptr_stop_to = FindStop(stop_to);
 
-    for(const auto& stop : ptr_stop_from->distance_to_stop) {
-        const auto ptr_stop_to = FindStop(stop.first);
-        double distance = stop.second;
-
-        distance_between_stops_.insert({std::make_pair(ptr_stop_from, ptr_stop_to), distance});
-    }
+    distance_between_stops_.insert({std::make_pair(ptr_stop_from, ptr_stop_to), distance});
 }
 
 const Stop* TransportCatalogue::FindStop(string_view name_stop) const {
