@@ -38,8 +38,9 @@ void MapRenderer::ApplySetting(const string& setting, Color& value) {
     }
 }
 
-vector<Polyline> MapRenderer::CreatePolylines(const vector<const Bus*>& buses,
-                                              const SphereProjector& sphere_projector) const {
+void MapRenderer::AddPolylines(const vector<const Bus*>& buses,
+                                           const SphereProjector& sphere_projector,
+                                           Document& xml_render) const {
     vector<Polyline> polylines;
     size_t index_in_palette = 0;
 
@@ -70,11 +71,15 @@ vector<Polyline> MapRenderer::CreatePolylines(const vector<const Bus*>& buses,
         ++index_in_palette;
     } 
 
-    return polylines;
+    for(const auto& polyline : polylines) {
+        xml_render.Add(polyline);
+    }
 }
 
-vector<Text> MapRenderer::CreateTextsBusLabel(const vector<const Bus*>& buses, const SphereProjector& sphere_projector) const {
-    vector<Text> result;
+void MapRenderer::AddTextsBusLabel(const vector<const Bus*>& buses,
+                                   const SphereProjector& sphere_projector,
+                                   Document& xml_render) const {
+    vector<Text> lables;
 
     Text underlayer_name_bus;
     Text name_bus;
@@ -116,8 +121,8 @@ vector<Text> MapRenderer::CreateTextsBusLabel(const vector<const Bus*>& buses, c
         underlayer_name_bus.SetStrokeLineCap(StrokeLineCap::ROUND);
         underlayer_name_bus.SetStrokeLineJoin(StrokeLineJoin::ROUND);
 
-        result.push_back(underlayer_name_bus);
-        result.push_back(name_bus);
+        lables.push_back(underlayer_name_bus);
+        lables.push_back(name_bus);
 
         ++index_in_palette;
         if(bus->is_roundtrip || (!bus->is_roundtrip 
@@ -129,14 +134,19 @@ vector<Text> MapRenderer::CreateTextsBusLabel(const vector<const Bus*>& buses, c
         underlayer_name_bus.SetPosition(sphere_projector(finish->coordinates));
         name_bus.SetPosition(sphere_projector(finish->coordinates));
   
-        result.push_back(underlayer_name_bus);
-        result.push_back(name_bus);
+        lables.push_back(underlayer_name_bus);
+        lables.push_back(name_bus);
     }
 
-    return result;
+    for(const auto& label : lables) {
+        xml_render.Add(label);
+    }
+
 }
 
-vector<Circle> MapRenderer::CreatePointsOfStops(const vector<const Stop*>& stops, const SphereProjector& sphere_projector) const {
+void MapRenderer::AddPointsOfStops(const vector<const Stop*>& stops,
+                                             const SphereProjector& sphere_projector,
+                                             Document& xml_render) const {
     vector<Circle> points;
 
     Circle point;
@@ -149,10 +159,14 @@ vector<Circle> MapRenderer::CreatePointsOfStops(const vector<const Stop*>& stops
         points.push_back(point);
     }
     
-    return points;
+    for(const auto& point : points) {
+        xml_render.Add(point);
+    }
 }
 
-vector<Text> MapRenderer::CreateStopLabel(const vector<const Stop*>& stops, const SphereProjector& sphere_projector) const {
+void MapRenderer::AddStopLabel(const vector<const Stop*>& stops,
+                                       const SphereProjector& sphere_projector,
+                                       Document& xml_render) const {
     vector<Text> lables;
 
     Text underlayer_name_stop;
@@ -186,12 +200,14 @@ vector<Text> MapRenderer::CreateStopLabel(const vector<const Stop*>& stops, cons
         lables.push_back(name_stop);
     }
 
-    return lables;
+    for(const auto& label : lables) {
+        xml_render.Add(label);
+    }
 }
 
 Document MapRenderer::CreateDocSVG(vector<const Bus*>&& buses,
                                    vector<const Stop*>&& stops) const {
-    Document result;
+    Document xml_render;
     vector<geo::Coordinates> all_coordinates;
 
     std::sort(buses.begin(), buses.end(), [](const Bus* lhs,const Bus* rhs) {
@@ -213,23 +229,12 @@ Document MapRenderer::CreateDocSVG(vector<const Bus*>&& buses,
                                      renderer_settings_.height,
                                      renderer_settings_.padding);
 
-    for(const auto& polyline : CreatePolylines(buses, sphere_projector)) {
-        result.Add(polyline);
-    }
-
-    for(const auto& bus_name : CreateTextsBusLabel(buses, sphere_projector)) {
-        result.Add(bus_name);
-    }
-
-    for(const auto& point : CreatePointsOfStops(stops, sphere_projector)) {
-        result.Add(point);
-    }
-
-    for(const auto& stop_name : CreateStopLabel(stops, sphere_projector)) {
-        result.Add(stop_name);
-    }
+    AddPolylines(buses, sphere_projector, xml_render);
+    AddTextsBusLabel(buses, sphere_projector, xml_render);
+    AddPointsOfStops(stops, sphere_projector, xml_render);
+    AddStopLabel(stops, sphere_projector, xml_render);
     
-    return result;
+    return xml_render;
 }
 
 

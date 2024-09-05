@@ -146,18 +146,21 @@ public:
 private:
     RednererSettings renderer_settings_;
 
-    std::vector<svg::Polyline> CreatePolylines(const std::vector<const domain::Bus*>& buses,
-                                               const SphereProjector& sphere_projector) const;
+    void AddPolylines(const std::vector<const domain::Bus*>& buses,
+                                            const SphereProjector& sphere_projector,
+                                            svg::Document& xml_render) const;
 
-    std::vector<svg::Text> CreateTextsBusLabel(const std::vector<const domain::Bus*>& buses,
-                                               const SphereProjector& sphere_projector) const;
+    void AddTextsBusLabel(const std::vector<const domain::Bus*>& buses,
+                                            const SphereProjector& sphere_projector,
+                                            svg::Document& xml_render) const;
 
-    std::vector<svg::Circle> CreatePointsOfStops(const std::vector<const domain::Stop*>& stops,
-                                                 const SphereProjector& sphere_projector) const;
+    void AddPointsOfStops(const std::vector<const domain::Stop*>& stops,
+                                            const SphereProjector& sphere_projector,
+                                            svg::Document& xml_render) const;
 
-    std::vector<svg::Text> CreateStopLabel(const std::vector<const domain::Stop*>& stops,
-                                           const SphereProjector& sphere_projector) const;
+    void AddStopLabel(const std::vector<const domain::Stop*>& stops,
+                                        const SphereProjector& sphere_projector,
+                                        svg::Document& xml_render) const;
     
 };
-
 }//namespace renderer

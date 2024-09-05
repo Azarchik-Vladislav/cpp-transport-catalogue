@@ -130,7 +130,7 @@ Node LoadBool(std::istream& input) {
 }
 
 Node LoadNull(std::istream& input) {
-    if (auto literal = LoadLiteral(input); literal == "null"s) {
+    if (auto literal = LoadLiteral(input); literal == "null"sv) {
         return Node{nullptr};
     } else {
         throw ParsingError("Failed to parse '"s + literal + "' as null"s);
@@ -354,7 +354,7 @@ void PrintValue<Dict>(const Dict& nodes, const PrintContext& ctx) {
         out << ": "sv;
         PrintNode(node, inner_ctx);
     }
-
+    
     out.put('\n');
     ctx.PrintIndent();
     out.put('}');

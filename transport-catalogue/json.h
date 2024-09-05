@@ -17,32 +17,13 @@ public:
     using runtime_error::runtime_error;
 };
 
-class Node final : std::variant<std::nullptr_t, Array, Dict, bool, int, double, std::string> {
+class Node final
+    : private std::variant<std::nullptr_t, Array, Dict, bool, int, double, std::string> {
 public:
     using variant::variant;
-
-    Node() = default;
-    Node(std::nullptr_t)
-        : variant(nullptr) {
-    }
-    Node(int val)
-        : variant(val) {
-    }
-    Node(double val)
-        : variant(val) {
-    }
-    Node(std::string val)
-        : variant(std::move(val)) {
-    }
-    Node(Array val)
-        : variant(std::move(val)) {
-    }
-    Node(Dict val)
-        : variant(std::move(val)) {
-    }
-    Node(bool val)
-        : variant(val) {
-    }
+	using Value = variant;
+    
+    Node(Value value) : variant(std::move(value)) {}
 
     bool IsInt() const {
         return std::holds_alternative<int>(*this);
@@ -109,23 +90,26 @@ public:
         return std::get<std::string>(*this);
     }
 
-    bool IsMap() const {
+    bool IsDict() const {
         return std::holds_alternative<Dict>(*this);
     }
-    const Dict& AsMap() const {
+    const Dict& AsDict() const {
         using namespace std::literals;
-        if (!IsMap()) {
-            throw std::logic_error("Not a map"s);
+        if (!IsDict()) {
+            throw std::logic_error("Not a dict"s);
         }
 
         return std::get<Dict>(*this);
     }
 
     bool operator==(const Node& rhs) const {
-        return this->GetValue() == rhs.GetValue();
+        return GetValue() == rhs.GetValue();
     }
 
-    const variant& GetValue() const {
+    const Value& GetValue() const {
+        return *this;
+    }
+    Value& GetValue() {
         return *this;
     }
 };

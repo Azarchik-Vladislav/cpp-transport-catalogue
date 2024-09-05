@@ -2,6 +2,7 @@
 
 #include "domain.h"
 #include "json.h"
+#include "json_builder.h"
 #include "request_handler.h"
 #include "svg.h"
 #include "transport_catalogue.h"
@@ -39,10 +40,10 @@ private:
     void ApplyCommandToDistance(const json::Node& node);
     void ApplyCommandToBus(const json::Node& node);
 
-    json::Dict ApplyCommandToBusInfo(const int id_request, const std::string& name_bus) const;
-    json::Dict ApplyCommandToStopInfo(const int id_request, const std::string& name_stop) const;
-    json::Dict ApplyCommandToMapInfo(const int id_request) const;
+    void ApplyCommandToBusInfo(const int id_request, const std::string& name_bus, json::Builder&  JSON_builder) const;
+    void ApplyCommandToStopInfo(const int id_request, const std::string& name_stop, json::Builder& JSON_builder) const;
+    void ApplyCommandToMapInfo(const int id_request, json::Builder& JSON_builder) const;
 
-    void PrepareJSON(const json::Array& array_in, json::Array& array_out) const;
+    void PrepareJSON(const json::Array& array_in, json::Builder&) const;
 };
 
