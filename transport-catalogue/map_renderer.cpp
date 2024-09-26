@@ -8,7 +8,7 @@ using std::set;
 using std::string;
 using std::vector;
 
-namespace renderer{
+namespace renderer {
 svg::Point SphereProjector::operator()(geo::Coordinates coords) const {
     return {
         (coords.lng - min_lon_) * zoom_coeff_ + padding_,

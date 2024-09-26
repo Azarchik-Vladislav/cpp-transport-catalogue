@@ -13,7 +13,7 @@
 #include <type_traits>
 #include <vector>
 
-namespace renderer{
+namespace renderer {
 inline const double EPSILON = 1e-6;
 bool IsZero(double value);
 
