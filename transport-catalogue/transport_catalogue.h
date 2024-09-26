@@ -20,14 +20,17 @@ public:
     void AddBus(const std::string& name_bus, const std::vector<std::string_view>& name_stops_for_bus, bool is_roundtrip);
     void AddDistance(std::string_view stop_from, std::string_view stop_to, double distance);
 
-    const domain::Stop* FindStop(std::string_view name_stop) const; 
     const std::set<std::string_view>FindBusesForStop(std::string_view name_stop) const;
+    const domain::Stop* FindStop(std::string_view name_stop) const; 
     const domain::Bus* FindBus(std::string_view name_bus) const;
-    double FindDistance(const domain::Stop* stop_from,const domain::Stop* stop_to) const;
+    std::optional<double> FindDistance(const domain::Stop* stop_from,const domain::Stop* stop_to) const;
 
-    std::vector<const domain::Bus*> GetBuses() const;
-    std::vector<const domain::Stop*> GetStops() const;
+    std::vector<const domain::Bus*> GetBuses(bool get_all_buses) const;
+    std::vector<const domain::Stop*> GetStops(bool get_all_stops) const;
 
+    size_t GetBusesCount() const;
+    size_t GetStopsCount() const;
+    
     domain::RouteDistanceInfo ComputeRouteDistanceInfo(const domain::Bus& bus) const;
     int ComputeUniqueStops (const domain::Bus& bus) const;
 
