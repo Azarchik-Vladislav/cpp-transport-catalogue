@@ -4,7 +4,7 @@
 
 
 #include <iostream>
-#include <cstdlib>
+
 using namespace std;
 
 int main() {
@@ -12,7 +12,7 @@ int main() {
 
     json.LoadTransportCatalogue();
     json.LoadSettings();
-    json.PrintJSON();
+    json.PrintJSON(std::cout);
 
     return 0;
 }   

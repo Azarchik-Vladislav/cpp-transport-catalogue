@@ -1,5 +1,6 @@
 #include "json_reader.h"
 
+using namespace graph;
 using namespace std::literals;
 using namespace json;
 
@@ -10,14 +11,13 @@ using std::string;
 using std::string_view;
 using std::vector;
 
-
 void JSONReader::ApplyArrayOfColorCharacteristics(const string& key, const Node& value) {
     try {
         if(value.AsArray().size() == 2) {
             svg::Point point {value.AsArray()[0].AsDouble(),
                               value.AsArray()[1].AsDouble()};
 
-            renderer_.ApplySetting(key, point);
+            renderer_->ApplySetting(key, point);
         }
     } catch (std::logic_error& err) {
         cerr << "Is not Point: "s << err.what() << "\n";
@@ -29,7 +29,7 @@ void JSONReader::ApplyArrayOfColorCharacteristics(const string& key, const Node&
                                        value.AsArray()[1].AsInt(),
                                        value.AsArray()[2].AsInt()});
 
-            renderer_.ApplySetting(key,color);
+            renderer_->ApplySetting(key,color);
         }
 
         if(value.AsArray().size() == 4) {
@@ -38,7 +38,7 @@ void JSONReader::ApplyArrayOfColorCharacteristics(const string& key, const Node&
                                  value.AsArray()[2].AsInt(),
                                  value.AsArray()[3].AsDouble()});
 
-            renderer_.ApplySetting(key, color);
+            renderer_->ApplySetting(key, color);
         }
     } catch (std::logic_error& err) {
         cerr << "Color format of RGB/RGBA mismatch: "s << err.what() << "\n";
@@ -75,7 +75,7 @@ void JSONReader::ApplyCommandToStop(const Node& node)
         cerr << "Unknow exeption"s << '\n';
     }
 
-    catalogue_.AddStop(stop);
+    catalogue_->AddStop(stop);
 }
 
 void JSONReader::ApplyCommandToDistance(const Node &node) {
@@ -98,7 +98,7 @@ void JSONReader::ApplyCommandToDistance(const Node &node) {
 
             if(key == "road_distances"s) {
                 for(const auto& [stop_to, distance] : value.AsDict()) {
-                    catalogue_.AddDistance(stop_from, stop_to, distance.AsDouble());
+                    catalogue_->AddDistance(stop_from, stop_to, distance.AsDouble());
                 }
             }       
         } 
@@ -146,7 +146,7 @@ void JSONReader::ApplyCommandToBus(const json::Node& node) {
             buffer_of_stops.insert(buffer_of_stops.end(), std::next(buffer_of_stops.rbegin()), buffer_of_stops.rend());
         }
 
-        catalogue_.AddBus(name_bus, buffer_of_stops, is_roundtrip);
+        catalogue_->AddBus(name_bus, buffer_of_stops, is_roundtrip);
     } catch(const std::logic_error& err) {
         cerr << "Incorrect value of key\""s  << key_err << "\" "s << err.what() << '\n'; 
     } catch(const std::exception& err) {
@@ -156,10 +156,12 @@ void JSONReader::ApplyCommandToBus(const json::Node& node) {
     }
 
 }
-void JSONReader::ApplyCommandToBusInfo(const int id_request, const string& name_bus, Builder& JSON_builder) const {
+
+void JSONReader::ApplyCommandToBusInfo(const int id_request, const string &name_bus, Builder &JSON_builder) const
+{
     using namespace domain;
 
-    optional<BusInfo> bus_info = request_handler.GetBusInfo(name_bus);
+    optional<BusInfo> bus_info = request_handler->GetBusInfo(name_bus);
 
     JSON_builder.StartDict().Key("request_id"s).Value(id_request);
 
@@ -178,7 +180,7 @@ void JSONReader::ApplyCommandToBusInfo(const int id_request, const string& name_
 void JSONReader::ApplyCommandToStopInfo(const int id_request, const std::string& name_stop, Builder& JSON_builder) const {
     using namespace domain;
 
-    optional<set<string_view>> stop_info = request_handler.GetStopInfo(name_stop);
+    optional<set<string_view>> stop_info = request_handler->GetStopInfo(name_stop);
 
     JSON_builder.StartDict().Key("request_id"s).Value(id_request);
 
@@ -202,9 +204,127 @@ void JSONReader::ApplyCommandToMapInfo(const int id_request, Builder& JSON_build
     JSON_builder.StartDict().Key("request_id"s).Value(id_request);
 
     std::ostringstream strm;
-    request_handler.RenderMap().Render(strm);
+    request_handler->RenderMap().Render(strm);
     JSON_builder.Key("map"s).Value(strm.str())
                 .EndDict();
+}
+
+void JSONReader::ApplyCommandToRouteInfo(const int id_request, 
+                                         const string& stop_from, 
+                                         const string& stop_to, 
+                                         Builder& JSON_builder) const {
+    JSON_builder.StartDict().Key("request_id"s).Value(id_request);
+
+    const auto route = router_->BuildOptimazedRoute(stop_from, stop_to);
+
+    if(!route) {
+        JSON_builder.Key("error_message"s).Value("not found"s);
+    } else {
+        JSON_builder.Key("items"s).StartArray();
+
+        Edge<double> edge;
+        for(const auto& edge_id : route->edges) {
+            edge = router_->GetGraph().GetEdge(edge_id);
+            JSON_builder.StartDict();
+
+            if(edge.span_count == 0) {
+                JSON_builder.Key("stop_name"s).Value(edge.name)
+                            .Key("time"s).Value(edge.weight)
+                            .Key("type"s).Value("Wait"s);
+            } else {
+                JSON_builder.Key("bus"s).Value(edge.name)
+                            .Key("span_count"s).Value(static_cast<int>(edge.span_count))
+                            .Key("time"s).Value(edge.weight)
+                            .Key("type"s).Value("Bus"s);
+            }
+            JSON_builder.EndDict();
+            
+        } 
+        JSON_builder.EndArray();
+        JSON_builder.Key("total_time"s).Value(route->weight);
+    }
+    JSON_builder.EndDict();
+}   
+
+void JSONReader::LoadSettingsForRenderer() {
+    const auto iter_command = doc_.GetRoot().AsDict().find("render_settings"s);
+
+    if(iter_command == doc_.GetRoot().AsDict().end()) {
+        return; 
+    }
+
+    const auto dict = iter_command->second.AsDict();
+
+    if(dict.empty()) {
+        return;
+    }
+
+    for(const auto& [key, value] : dict) {
+        if(value.IsInt()) {
+            renderer_->ApplySetting<int>(key, value.AsInt());
+            continue;
+        }
+
+        if(value.IsPureDouble()) {
+            renderer_->ApplySetting<double>(key, value.AsDouble());
+            continue;
+        }
+
+        //Если массив, в котором любое из значений является IsDouble() - это RGB/RGBA
+        if(value.IsArray() && value.AsArray()[0].IsDouble()) {
+            ApplyArrayOfColorCharacteristics(key, value.AsArray());
+            continue;
+        }
+        
+        if(value.IsString()) {
+            svg::Color color (value.AsString());
+            renderer_->ApplySetting(key, color);
+        }
+
+        if(value.IsArray()) {
+            for(const auto& elem : value.AsArray()) {
+
+                if(elem.IsString()) {
+                    svg::Color color (elem.AsString());
+                    renderer_->ApplySetting(key, color);
+                    continue;
+                }
+
+                if(elem.IsArray()){
+                    ApplyArrayOfColorCharacteristics(key, elem.AsArray());
+                    continue; 
+                }
+                
+                throw std::logic_error("Is not a color"s);
+            }  
+        }
+    }
+}
+
+void JSONReader::LoadSettingsForRouter() {
+    const auto iter_command = doc_.GetRoot().AsDict().find("routing_settings"s);
+
+    if(iter_command == doc_.GetRoot().AsDict().end()) {
+        return; 
+    };
+
+    const auto dict = iter_command->second.AsDict();
+
+    if(dict.empty()) {
+        return;
+    }
+    router::SettingsTransportRouter settings;
+
+    for(const auto& [key, value] : dict) {
+        if(key == "bus_wait_time"s) {
+            settings.wait_time = value.AsInt();
+        }
+        if(key == "bus_velocity"s) {
+            settings.velocity = value.AsDouble();
+        }
+    }
+
+    router_ = std::make_unique<router::TransportRouter>(settings, *catalogue_);
 }
 
 void JSONReader::PrepareJSON(const Array& array_in, Builder& JSON_builder) const {
@@ -215,7 +335,10 @@ void JSONReader::PrepareJSON(const Array& array_in, Builder& JSON_builder) const
     string key_err;
     string type_request;
     string name_for_type;
-    int id_reqest = 0;
+    int id_request = 0;
+
+    string stop_from;
+    string stop_to;
     
     try{
         for(const auto& dict : array_in) {
@@ -225,7 +348,7 @@ void JSONReader::PrepareJSON(const Array& array_in, Builder& JSON_builder) const
                 key_err = key;
 
                 if(key == "id"s) {
-                    id_reqest = value.AsInt();
+                    id_request = value.AsInt();
                 }
 
                 if(key == "type"s) {
@@ -235,19 +358,31 @@ void JSONReader::PrepareJSON(const Array& array_in, Builder& JSON_builder) const
                 if(key == "name"s) {
                     name_for_type = value.AsString();
                 } 
+
+                if(key == "from"s) {
+                    stop_from = value.AsString();
+                }
+
+                if(key == "to"s) {
+                    stop_to = value.AsString();
+                }
             }
        
             if(type_request == "Bus"s) {
-                ApplyCommandToBusInfo(id_reqest, name_for_type, JSON_builder);
+                ApplyCommandToBusInfo(id_request, name_for_type, JSON_builder);
             } 
 
             if(type_request == "Stop"s) {
-                ApplyCommandToStopInfo(id_reqest, name_for_type, JSON_builder);
+                ApplyCommandToStopInfo(id_request, name_for_type, JSON_builder);
             }
 
             if(type_request == "Map"s) {
-                ApplyCommandToMapInfo(id_reqest, JSON_builder);
+                ApplyCommandToMapInfo(id_request, JSON_builder);
             } 
+            
+            if(type_request == "Route"s) {
+                ApplyCommandToRouteInfo(id_request, stop_from, stop_to, JSON_builder);
+            }
         }
 
          JSON_builder.EndArray(); 
@@ -282,62 +417,14 @@ void JSONReader::LoadTransportCatalogue() {
     }
 }
 
+
+
 void JSONReader::LoadSettings() {
-    const auto iter_command = doc_.GetRoot().AsDict().find("render_settings"s);
-
-    if(iter_command == doc_.GetRoot().AsDict().end()) {
-        return; 
-    }
-
-    const auto dict = iter_command->second.AsDict();
-
-    if(dict.empty()) {
-        return;
-    }
-
-    for(const auto& [key, value] : dict) {
-        if(value.IsInt()) {
-            renderer_.ApplySetting<int>(key, value.AsInt());
-            continue;
-        }
-
-        if(value.IsPureDouble()) {
-            renderer_.ApplySetting<double>(key, value.AsDouble());
-            continue;
-        }
-
-        //Если массив, в котором любое из значений является IsDouble() - это RGB/RGBA
-        if(value.IsArray() && value.AsArray()[0].IsDouble()) {
-            ApplyArrayOfColorCharacteristics(key, value.AsArray());
-            continue;
-        }
-        
-        if(value.IsString()) {
-            svg::Color color (value.AsString());
-            renderer_.ApplySetting(key, color);
-        }
-
-        if(value.IsArray()) {
-            for(const auto& elem : value.AsArray()) {
-
-                if(elem.IsString()) {
-                    svg::Color color (elem.AsString());
-                    renderer_.ApplySetting(key, color);
-                    continue;
-                }
-
-                if(elem.IsArray()){
-                    ApplyArrayOfColorCharacteristics(key, elem.AsArray());
-                    continue; 
-                }
-                
-                throw std::logic_error("Is not a color"s);
-            }  
-        }
-    }
+    LoadSettingsForRenderer();
+    LoadSettingsForRouter();
 }
 
-void JSONReader::PrintJSON() const {
+void JSONReader::PrintJSON(std::ostream& out) const {
     using namespace json;
 
     const auto iter_command = doc_.GetRoot().AsDict().find("stat_requests"s);
@@ -353,5 +440,5 @@ void JSONReader::PrintJSON() const {
     Builder JSON_builder;
     PrepareJSON(array_in, JSON_builder);
 
-    Print (Document(JSON_builder.Build()), std::cout);
+    Print (Document(JSON_builder.Build()), out);
 }
