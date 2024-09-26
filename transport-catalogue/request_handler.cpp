@@ -6,8 +6,7 @@ using namespace domain;
 using std::string_view;
 using std::set;
 
-std::optional<BusInfo> RequestHandler::GetBusInfo(string_view bus) const
-{
+std::optional<BusInfo> RequestHandler::GetBusInfo(string_view bus) const {
     auto bus_info = db_.FindBus(bus);
 
     if(bus_info == nullptr) {
@@ -32,5 +31,10 @@ std::optional<set<string_view>> RequestHandler::GetStopInfo(string_view stop) co
 }
 
 svg::Document RequestHandler::RenderMap() const {
-    return renderer_.CreateDocSVG(db_.GetBuses(), db_.GetStops());  
+    return renderer_.CreateDocSVG(db_.GetBuses(false), db_.GetStops(false));  
+}
+
+std::optional<graph::Router<double>::RouteInfo> RequestHandler::BuildOptimasedRoute(const string_view stop_from, 
+                                                                                    const string_view stop_to) const {
+    return tr_.BuildOptimazedRoute(stop_from, stop_to);
 }
