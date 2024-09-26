@@ -17,6 +17,11 @@ struct Bus {
 struct Stop {
     std::string name_stop;
     geo::Coordinates coordinates;
+
+    bool operator==(const Stop& other) const {
+        return name_stop == other.name_stop
+               && coordinates == coordinates; 
+    }
 };
 
 struct RouteDistanceInfo {
