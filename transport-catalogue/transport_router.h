@@ -32,8 +32,6 @@ public:
 
     const std::optional<graph::Router<double>::RouteInfo> BuildOptimazedRoute(std::string_view from,
                                                                               std::string_view to) const;   
-    const graph::DirectedWeightedGraph<double>& GetGraph() const;
-
 
 private:
     const TransportCatalogue& catalogue_;
@@ -44,12 +42,10 @@ private:
     std::unique_ptr<graph::Router<double>> router_ = nullptr;
 
     //Создает весовую матрицу для маршрутов
-    std::vector<std::vector<double>> ComputeWeightForEdges(const std::vector<const domain::Stop*> stops);
+    std::vector<std::vector<double>> ComputeWeightForEdges(const std::vector<const domain::Stop*>& stops);
 
     void AddWaitEdges(const std::vector<const domain::Stop*>& stops);
-    void AddBusEdges(const std::vector<std::vector<double>>& weight_for_edges,
-                                           const std::vector<const domain::Stop*>& stops, 
-                                           const domain::Bus& bus);
+    void AddBusEdges();
 
     void CreateGraph();   
 };

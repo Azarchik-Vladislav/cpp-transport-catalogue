@@ -17,11 +17,7 @@ const optional<Router<double>::RouteInfo> TransportRouter::BuildOptimazedRoute(s
     return router_->BuildRoute(start_routes_id_.at(string(from)), start_routes_id_.at(string(to)));
 }
 
-const DirectedWeightedGraph<double>& TransportRouter::GetGraph() const {
-    return route_graph_;
-}
-
-vector<vector<double>> TransportRouter::ComputeWeightForEdges(const vector<const Stop*> stops) {
+vector<vector<double>> TransportRouter::ComputeWeightForEdges(const vector<const Stop*>& stops) {
     vector<vector<double>> result;
 
     //Заранее создаем матрицу, размером равным количеству остановок в маршруте
@@ -81,40 +77,40 @@ void TransportRouter::AddWaitEdges(const vector<const Stop*>& stops) {
     }
 }
 
-void TransportRouter::AddBusEdges(const vector<vector<double>>& weight_for_edges,
-                                  const vector<const Stop*>& stops, 
-                                  const Bus& bus) {
-    for(size_t identical_stop = 0; identical_stop < stops.size(); ++identical_stop) {
-        if(weight_for_edges[identical_stop][identical_stop] != 0){
-            route_graph_.AddEdge(BuildEdge<double>()
-                                      .SetName(bus.name_bus)
-                                      .SetIdFrom(start_routes_id_.at(stops[identical_stop]->name_stop))
-                                      .SetIdTo(start_routes_id_.at(stops[identical_stop]->name_stop))
-                                      .SetWeight(weight_for_edges[identical_stop][identical_stop])
-                                      .Build());
-        }
-    }
+void TransportRouter::AddBusEdges() {
+    for(const auto& bus : catalogue_.GetBuses(true)) {                               
+        const vector<const Stop*>& stops = bus->stops_for_bus;
+        const auto weight_for_edges = ComputeWeightForEdges(stops);
 
-    for(size_t stop_from = 0; stop_from < stops.size(); ++stop_from) {
-        for(size_t stop_to = stop_from + 1; stop_to < stops.size(); ++stop_to) {
-            route_graph_.AddEdge(BuildEdge<double>()
-                                 .SetName(bus.name_bus)
-                                 .SetSpanCount(stop_to - stop_from)
-                                 .SetIdFrom(start_routes_id_.at(stops[stop_from]->name_stop) + 1)
-                                 .SetIdTo(start_routes_id_.at(stops[stop_to]->name_stop))
-                                 .SetWeight(weight_for_edges[stop_from][stop_to])
-                                 .Build()
-                                );
+        for(size_t identical_stop = 0; identical_stop < stops.size(); ++identical_stop) {
+            if(weight_for_edges[identical_stop][identical_stop] != 0){
+                route_graph_.AddEdge(BuildEdge<double>()
+                                     .SetName(bus->name_bus)
+                                     .SetIdFrom(start_routes_id_.at(stops[identical_stop]->name_stop))
+                                     .SetIdTo(start_routes_id_.at(stops[identical_stop]->name_stop))
+                                     .SetWeight(weight_for_edges[identical_stop][identical_stop])
+                                     .Build()
+                                    );
+            }
+        }   
+
+        for(size_t stop_from = 0; stop_from < stops.size(); ++stop_from) {
+            for(size_t stop_to = stop_from + 1; stop_to < stops.size(); ++stop_to) {
+                route_graph_.AddEdge(BuildEdge<double>()
+                                     .SetName(bus->name_bus)
+                                     .SetSpanCount(stop_to - stop_from)
+                                     .SetIdFrom(start_routes_id_.at(stops[stop_from]->name_stop) + 1)
+                                     .SetIdTo(start_routes_id_.at(stops[stop_to]->name_stop))
+                                     .SetWeight(weight_for_edges[stop_from][stop_to])
+                                     .Build()
+                                     );
+            }
         }
     }
 }
 
 void TransportRouter::CreateGraph() {
-    AddWaitEdges(catalogue_.GetStops(true)); 
-
-    for(const auto& bus : catalogue_.GetBuses(true)){
-        const vector<const Stop*>& stops = bus->stops_for_bus;        
-        AddBusEdges(ComputeWeightForEdges(stops), stops, *bus);
-    }
+    AddWaitEdges(catalogue_.GetStops(true));     
+    AddBusEdges();
 }
 }//namespace router

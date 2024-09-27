@@ -26,17 +26,17 @@ void JSONReader::ApplyArrayOfColorCharacteristics(const string& key, const Node&
     try {
         if(value.AsArray().size() == 3) {
             svg::Color color(svg::Rgb{value.AsArray()[0].AsInt(),
-                                       value.AsArray()[1].AsInt(),
-                                       value.AsArray()[2].AsInt()});
+                                      value.AsArray()[1].AsInt(),
+                                      value.AsArray()[2].AsInt()});
 
             renderer_->ApplySetting(key,color);
         }
 
         if(value.AsArray().size() == 4) {
             svg::Color color(svg::Rgba{value.AsArray()[0].AsInt(),
-                                 value.AsArray()[1].AsInt(),
-                                 value.AsArray()[2].AsInt(),
-                                 value.AsArray()[3].AsDouble()});
+                                       value.AsArray()[1].AsInt(),
+                                       value.AsArray()[2].AsInt(),
+                                       value.AsArray()[3].AsDouble()});
 
             renderer_->ApplySetting(key, color);
         }
@@ -222,19 +222,17 @@ void JSONReader::ApplyCommandToRouteInfo(const int id_request,
     } else {
         JSON_builder.Key("items"s).StartArray();
 
-        Edge<double> edge;
-        for(const auto& edge_id : route->edges) {
-            edge = router_->GetGraph().GetEdge(edge_id);
+        for(const auto& edge : route->edges) {
             JSON_builder.StartDict();
 
-            if(edge.span_count == 0) {
-                JSON_builder.Key("stop_name"s).Value(edge.name)
-                            .Key("time"s).Value(edge.weight)
+            if(edge->span_count == 0) {
+                JSON_builder.Key("stop_name"s).Value(edge->name)
+                            .Key("time"s).Value(edge->weight)
                             .Key("type"s).Value("Wait"s);
             } else {
-                JSON_builder.Key("bus"s).Value(edge.name)
-                            .Key("span_count"s).Value(static_cast<int>(edge.span_count))
-                            .Key("time"s).Value(edge.weight)
+                JSON_builder.Key("bus"s).Value(edge->name)
+                            .Key("span_count"s).Value(static_cast<int>(edge->span_count))
+                            .Key("time"s).Value(edge->weight)
                             .Key("type"s).Value("Bus"s);
             }
             JSON_builder.EndDict();
