@@ -47,6 +47,7 @@ Node::Value& Builder::GetCurrentValue() {
     if (nodes_stack_.empty()) {
         throw std::logic_error("Attempt to change finalized JSON"s);
     }
+    
     return nodes_stack_.back()->GetValue();
 }
 

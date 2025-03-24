@@ -9,6 +9,7 @@ using std::string;
 using std::vector;
 
 namespace renderer {
+//_____SphereProjecror_____
 svg::Point SphereProjector::operator()(geo::Coordinates coords) const {
     return {
         (coords.lng - min_lon_) * zoom_coeff_ + padding_,
@@ -16,8 +17,8 @@ svg::Point SphereProjector::operator()(geo::Coordinates coords) const {
     };
 }
 
+//_____MapRenderer_____
 void MapRenderer::ApplySetting(const std::string& setting, svg::Point& value) {
-
     if(setting == "bus_label_offset"s) {
         renderer_settings_.bus_label_offset = value;
     }
@@ -28,7 +29,6 @@ void MapRenderer::ApplySetting(const std::string& setting, svg::Point& value) {
 }
 
 void MapRenderer::ApplySetting(const string& setting, Color& value) {
-
     if(setting == "color_palette"s) {
         renderer_settings_.color_palette.push_back(value);
     }
@@ -39,8 +39,8 @@ void MapRenderer::ApplySetting(const string& setting, Color& value) {
 }
 
 void MapRenderer::AddPolylines(const vector<const Bus*>& buses,
-                                           const SphereProjector& sphere_projector,
-                                           Document& xml_render) const {
+                               const SphereProjector& sphere_projector,
+                               Document& xml_render) const {
     vector<Polyline> polylines;
     size_t index_in_palette = 0;
 
@@ -53,7 +53,7 @@ void MapRenderer::AddPolylines(const vector<const Bus*>& buses,
 
         for(size_t i = 0; i < bus->stops_for_bus.size(); ++i) {
 
-            if(bus->is_roundtrip && i == bus->stops_for_bus.size()){
+            if(bus->is_roundtrip && i == bus->stops_for_bus.size()) {
                 break;
             }
 
@@ -127,7 +127,6 @@ void MapRenderer::AddTextsBusLabel(const vector<const Bus*>& buses,
         ++index_in_palette;
         if(bus->is_roundtrip || (!bus->is_roundtrip 
                                  && start == finish)) {
-            
             continue;
         }
 
@@ -219,6 +218,7 @@ Document MapRenderer::CreateDocSVG(vector<const Bus*>&& buses,
               );
 
     for(const auto& bus : buses) {
+
         for(const auto& stop : bus->stops_for_bus) {
             all_coordinates.push_back(stop->coordinates);
         }

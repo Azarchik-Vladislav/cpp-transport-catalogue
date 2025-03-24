@@ -1,10 +1,9 @@
 #include "svg.h"
 
 namespace svg {
-
 using namespace std::literals;
 
-std::ostream &operator<<(std::ostream& out, StrokeLineCap stroke_line_cup) {
+std::ostream& operator<<(std::ostream& out, StrokeLineCap stroke_line_cup) {
 
     switch (stroke_line_cup) {
         case StrokeLineCap::BUTT:
@@ -26,7 +25,7 @@ std::ostream &operator<<(std::ostream& out, StrokeLineCap stroke_line_cup) {
     return out;
 }
 
-std::ostream &operator<<(std::ostream &out, StrokeLineJoin stroke_line_join) {
+std::ostream& operator<<(std::ostream& out, StrokeLineJoin stroke_line_join) {
 
     switch (stroke_line_join) {
         case StrokeLineJoin::ARCS:
@@ -95,8 +94,83 @@ void Object::Render(const RenderContext& context) const {
     context.out << std::endl;
 }
 
-// ---------- Circle ------------------
+//______RenderContext______
+RenderContext::RenderContext(std::ostream& _out) : out(_out) {
+}
 
+RenderContext::RenderContext(std::ostream& _out, int _indent_step, int _indent)
+    : out(_out)
+    , indent_step(_indent_step)
+    , indent(_indent) {
+}
+
+RenderContext RenderContext::Indented() const {
+    return {out, indent_step, indent + indent_step};
+}
+
+void RenderContext::RenderIndent() const {
+    for (int i = 0; i < indent; ++i) {
+        out.put(' ');
+    }
+}
+
+//______Color______
+Color::Color(std::string color) : variant(std::move(color)) {
+}
+
+Color::Color(Rgb color) : variant(color) {
+}
+
+Color::Color(Rgba color) : variant(color) {
+}
+
+bool Color::IsString() const {
+    return std::holds_alternative<std::string>(*this);
+}
+
+const std::string& Color::AsString() const{
+    using namespace std::literals;
+
+    if (!IsString()) {
+        throw std::logic_error("Not a string"s);
+    }
+
+    return std::get<std::string>(*this);
+}
+
+bool Color::IsRgb() const {
+    return std::holds_alternative<Rgb>(*this);
+}
+
+const Rgb& Color::AsRgb() const {
+    using namespace std::literals;
+
+    if (!IsRgb()) {
+        throw std::logic_error("Not a string"s);
+    }
+
+    return std::get<Rgb>(*this);
+}
+
+bool Color::IsRgba() const {
+    return std::holds_alternative<Rgba>(*this);
+}
+
+const Rgba &Color::AsRgba() const {
+    using namespace std::literals;
+
+    if (!IsRgba()) {
+        throw std::logic_error("Not a string"s);
+    }
+
+    return std::get<Rgba>(*this);
+}
+
+bool Color::IsMonostate() const {
+    return std::holds_alternative<std::monostate>(*this);
+}
+
+//______Circle______
 Circle& Circle::SetCenter(Point center) {
     center_ = center;
     return *this;
@@ -116,8 +190,7 @@ void Circle::RenderObject(const RenderContext& context) const {
     out << "/>"sv;
 }
 
-// ---------- Polyline ------------------
-
+//______Polyline______
 Polyline& Polyline::AddPoint(Point point) {
     points_.push_back(point);
 
@@ -138,7 +211,7 @@ void Polyline::AddCoordinates(std::ostream& out) const {
     out << "\""sv;
 }
 
-void Polyline::RenderObject(const RenderContext &context) const {
+void Polyline::RenderObject(const RenderContext& context) const {
     auto& out = context.out;
     
     out << "<polyline"sv;
@@ -148,8 +221,7 @@ void Polyline::RenderObject(const RenderContext &context) const {
     out << "/>"sv;
 }
 
-// ---------- Text ------------------
-
+//_____Text______
 Text& Text::SetPosition(Point pos) {
     position_ = pos;
 
@@ -174,13 +246,13 @@ Text& Text::SetFontFamily(std::string font_family) {
     return *this;
 }
 
-Text &Text::SetFontWeight(std::string font_weight) {
+Text& Text::SetFontWeight(std::string font_weight) {
     font_weight_ = font_weight;
 
     return *this;
 }
 
-Text &Text::SetData(std::string data) {
+Text& Text::SetData(std::string data) {
     data_ = data;
 
     return *this;
@@ -211,7 +283,7 @@ void Text::EscapingCharactersInData(std::ostream& out) const {
 
 }
 
-void Text::RenderObject(const RenderContext &context) const {
+void Text::RenderObject(const RenderContext& context) const {
     auto& out = context.out;
 
     out << "<text"sv;
@@ -233,9 +305,8 @@ void Text::RenderObject(const RenderContext &context) const {
     out << "</text>"s;
 }
 
-// ---------- Document ------------------
-
-void Document::AddPtr(std::unique_ptr<Object> &&obj) {
+//______Document______
+void Document::AddPtr(std::unique_ptr<Object>&& obj) {
     objects_.emplace_back(std::move(obj));
 }
 

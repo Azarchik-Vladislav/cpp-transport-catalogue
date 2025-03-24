@@ -19,7 +19,7 @@ void JSONReader::ApplyArrayOfColorCharacteristics(const string& key, const Node&
 
             renderer_->ApplySetting(key, point);
         }
-    } catch (std::logic_error& err) {
+    } catch(std::logic_error& err) {
         cerr << "Is not Point: "s << err.what() << "\n";
     }
 
@@ -40,13 +40,12 @@ void JSONReader::ApplyArrayOfColorCharacteristics(const string& key, const Node&
 
             renderer_->ApplySetting(key, color);
         }
-    } catch (std::logic_error& err) {
+    } catch(std::logic_error& err) {
         cerr << "Color format of RGB/RGBA mismatch: "s << err.what() << "\n";
     }
 }
 
-void JSONReader::ApplyCommandToStop(const Node& node)
-{
+void JSONReader::ApplyCommandToStop(const Node& node) {
     std::string key_err;
     try {
         for(const auto& [key, value] : node.AsDict()){
@@ -78,7 +77,7 @@ void JSONReader::ApplyCommandToStop(const Node& node)
     catalogue_->AddStop(stop);
 }
 
-void JSONReader::ApplyCommandToDistance(const Node &node) {
+void JSONReader::ApplyCommandToDistance(const Node& node) {
     string key_err;
 
     try {
@@ -154,11 +153,9 @@ void JSONReader::ApplyCommandToBus(const json::Node& node) {
     } catch(...) {
         cerr << "Unknow exeption"s << '\n';
     }
-
 }
 
-void JSONReader::ApplyCommandToBusInfo(const int id_request, const string &name_bus, Builder &JSON_builder) const
-{
+void JSONReader::ApplyCommandToBusInfo(const int id_request, const string &name_bus, Builder &JSON_builder) const {
     using namespace domain;
 
     optional<BusInfo> bus_info = request_handler->GetBusInfo(name_bus);
@@ -288,7 +285,7 @@ void JSONReader::LoadSettingsForRenderer() {
                     continue;
                 }
 
-                if(elem.IsArray()){
+                if(elem.IsArray()) {
                     ApplyArrayOfColorCharacteristics(key, elem.AsArray());
                     continue; 
                 }
@@ -317,6 +314,7 @@ void JSONReader::LoadSettingsForRouter() {
         if(key == "bus_wait_time"s) {
             settings.wait_time = value.AsInt();
         }
+        
         if(key == "bus_velocity"s) {
             settings.velocity = value.AsDouble();
         }
@@ -338,7 +336,7 @@ void JSONReader::PrepareJSON(const Array& array_in, Builder& JSON_builder) const
     string stop_from;
     string stop_to;
     
-    try{
+    try {
         for(const auto& dict : array_in) {
             key_err = "stat_requests Dicts"s;
 
@@ -415,8 +413,6 @@ void JSONReader::LoadTransportCatalogue() {
     }
 }
 
-
-
 void JSONReader::LoadSettings() {
     LoadSettingsForRenderer();
     LoadSettingsForRouter();
@@ -435,8 +431,8 @@ void JSONReader::PrintJSON(std::ostream& out) const {
     if(array_in.empty()) {
         return;
     }
+
     Builder JSON_builder;
     PrepareJSON(array_in, JSON_builder);
-
     Print (Document(JSON_builder.Build()), out);
 }

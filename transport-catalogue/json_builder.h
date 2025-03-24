@@ -1,12 +1,12 @@
 #pragma once
 
-#include"json.h"
-
 #include <iostream>
 #include <map>
 #include <string>
 #include <variant>
 #include <vector>
+
+#include"json.h"
 
 namespace json {
 class Builder {
@@ -89,7 +89,7 @@ private:
 
     class DictValueContext : public BaseContext {
     public:
-        DictValueContext(BaseContext base) : BaseContext(base){
+        DictValueContext(BaseContext base) : BaseContext(base) {
         }
 
         DictItemContext Value(Node::Value value);

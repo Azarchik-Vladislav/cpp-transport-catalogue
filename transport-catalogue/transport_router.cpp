@@ -83,6 +83,7 @@ void TransportRouter::AddBusEdges() {
         const auto weight_for_edges = ComputeWeightForEdges(stops);
 
         for(size_t identical_stop = 0; identical_stop < stops.size(); ++identical_stop) {
+
             if(weight_for_edges[identical_stop][identical_stop] != 0){
                 route_graph_.AddEdge(BuildEdge<double>()
                                      .SetName(bus->name_bus)
@@ -95,6 +96,7 @@ void TransportRouter::AddBusEdges() {
         }   
 
         for(size_t stop_from = 0; stop_from < stops.size(); ++stop_from) {
+            
             for(size_t stop_to = stop_from + 1; stop_to < stops.size(); ++stop_to) {
                 route_graph_.AddEdge(BuildEdge<double>()
                                      .SetName(bus->name_bus)

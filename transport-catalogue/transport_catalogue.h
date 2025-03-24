@@ -1,8 +1,5 @@
 #pragma once
 
-#include "geo.h"
-#include "domain.h"
-
 #include <algorithm>
 #include <deque>
 #include <optional>
@@ -13,6 +10,9 @@
 #include <vector>
 #include <unordered_set>
 #include <unordered_map>
+
+#include "geo.h"
+#include "domain.h"
 
 class TransportCatalogue {
 public:

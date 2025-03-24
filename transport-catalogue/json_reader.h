@@ -1,5 +1,10 @@
 #pragma once
 
+#include <iostream>
+#include <string>
+#include <string_view>
+#include <sstream>
+
 #include "domain.h"
 #include "graph.h"
 #include "json.h"
@@ -10,16 +15,10 @@
 #include "transport_catalogue.h"
 #include "transport_router.h"
 
-
-#include <iostream>
-#include <string>
-#include <string_view>
-#include <sstream>
-
 class JSONReader {
 public:
     explicit JSONReader(std::istream& input) 
-                        :  doc_ (json::Load(input)) { 
+        :  doc_ (json::Load(input)) { 
         request_handler = std::make_unique<RequestHandler>(*catalogue_, *renderer_, *router_); 
     }
 

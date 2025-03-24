@@ -39,25 +39,11 @@ struct Rgba {
  * Хранит ссылку на поток вывода, текущее значение и шаг отступа при выводе элемента
  */
 struct RenderContext {
-    RenderContext(std::ostream& _out)
-        : out(_out) {
-    }
+    RenderContext(std::ostream& _out);
+    RenderContext(std::ostream& _out, int _indent_step, int _indent = 0);
 
-    RenderContext(std::ostream& _out, int _indent_step, int _indent = 0)
-        : out(_out)
-        , indent_step(_indent_step)
-        , indent(_indent) {
-    }
-
-    RenderContext Indented() const {
-        return {out, indent_step, indent + indent_step};
-    }
-
-    void RenderIndent() const {
-        for (int i = 0; i < indent; ++i) {
-            out.put(' ');
-        }
-    }
+    RenderContext Indented() const;
+    void RenderIndent() const;
 
     std::ostream& out;
     int indent_step = 0;
@@ -83,55 +69,20 @@ using std::optional;
 class Color final : private std::variant<std::monostate, std::string, Rgb, Rgba> {
 public:
     Color() = default;
-    Color(std::string color)
-          : variant(std::move(color)) {
-    }
-    Color(Rgb color)
-          : variant(color) {
-    }
-    Color(Rgba color)
-          : variant(color) {
-    }
+    Color(std::string color);
+    Color(Rgb color);
+    Color(Rgba color);
 
-    bool IsString() const {
-        return std::holds_alternative<std::string>(*this);
-    }
-    const std::string& AsString() const {
-        using namespace std::literals;
-        if (!IsString()) {
-            throw std::logic_error("Not a string"s);
-        }
+    bool IsString() const;
+    const std::string& AsString() const;
 
-        return std::get<std::string>(*this);
-    }
+    bool IsRgb() const;
+    const Rgb& AsRgb() const;
 
-    bool IsRgb() const {
-        return std::holds_alternative<Rgb>(*this);
-    }
-    const Rgb& AsRgb() const {
-        using namespace std::literals;
-        if (!IsRgb()) {
-            throw std::logic_error("Not a string"s);
-        }
+    bool IsRgba() const;
+    const Rgba& AsRgba() const;
 
-        return std::get<Rgb>(*this);
-    }
-
-    bool IsRgba() const {
-        return std::holds_alternative<Rgba>(*this);
-    }
-    const Rgba& AsRgba() const {
-        using namespace std::literals;
-        if (!IsRgba()) {
-            throw std::logic_error("Not a string"s);
-        }
-
-        return std::get<Rgba>(*this);
-    }
-
-    bool IsMonostate() const {
-        return std::holds_alternative<std::monostate>(*this);
-    }
+    bool IsMonostate() const;
 
     const variant& GetValue() const {
         return *this;
@@ -303,11 +254,8 @@ public:
     }
 
     virtual void AddPtr(std::unique_ptr<Object>&& obj) = 0;
-    
 protected:
     ~ObjectContainer() = default;
-    
-
 };
 
 class Document : public ObjectContainer {

@@ -1,13 +1,12 @@
 #pragma once
 
-#include "ranges.h"
-
 #include <cstdlib>
 #include <string>
 #include <vector>
 
-namespace graph {
+#include "ranges.h"
 
+namespace graph {
 using VertexId = size_t;
 using EdgeId = size_t;
 
@@ -23,7 +22,7 @@ struct Edge {
 template<typename Weight>
 class BuildEdge {
 public:
-    BuildEdge() : edge_(){
+    BuildEdge() : edge_() {
     }
 
     BuildEdge& SetName(std::string name) {

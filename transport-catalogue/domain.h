@@ -1,10 +1,11 @@
 #pragma once
 
-#include "geo.h"
-
 #include <string>
 #include <string_view>
 #include <vector>
+
+#include "geo.h"
+
 namespace domain {
 struct Stop;
 

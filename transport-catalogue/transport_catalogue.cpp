@@ -4,7 +4,6 @@ using namespace std::literals;
 using namespace domain;
 
 using geo::Coordinates;
-
 using std::deque;
 using std::move;
 using std::set;
@@ -46,9 +45,11 @@ void TransportCatalogue::AddDistance(string_view stop_from, string_view stop_to,
 
 const set<string_view> TransportCatalogue::FindBusesForStop(std::string_view name_stop) const {
     auto iter = buses_for_stop_.find(name_stop);
+
     if(iter == buses_for_stop_.end()) {
         throw std::invalid_argument("Stop not in the catalogue"s);
     }
+
     return buses_for_stop_.find(name_stop)->second;
 }
 
@@ -72,7 +73,7 @@ const Bus* TransportCatalogue::FindBus(string_view name_bus) const {
     return iter->second;
 }
 
-std::optional<double> TransportCatalogue::FindDistance(const Stop* stop_from, const Stop* stop_to) const{
+std::optional<double> TransportCatalogue::FindDistance(const Stop* stop_from, const Stop* stop_to) const {
     auto iter_from_to = distance_between_stops_.find(PairStops{stop_from, stop_to});
     if(iter_from_to != nullptr) {
         return iter_from_to->second;
@@ -151,5 +152,6 @@ int TransportCatalogue::ComputeUniqueStops(const Bus& bus) const {
             geo_distance += ComputeDistance(stop_from->coordinates, stop_to->coordinates);
         }
         double curvature = real_distance / geo_distance;
+        
         return RouteDistanceInfo{real_distance, curvature};
     }

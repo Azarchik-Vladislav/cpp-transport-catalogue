@@ -1,7 +1,8 @@
 #define _USE_MATH_DEFINES
-#include "geo.h"
 
 #include <cmath>
+
+#include "geo.h"
 
 namespace geo {
 double ComputeDistance(Coordinates from, Coordinates to) {
@@ -11,6 +12,7 @@ double ComputeDistance(Coordinates from, Coordinates to) {
                 + cos(from.lat * dr) * cos(to.lat * dr) * cos(abs(from.lng - to.lng) * dr))
         * 6371000;
 }
+
 bool Coordinates::operator==(const Coordinates other) const {
     return lat == other.lat && lng == other.lng;
 }

@@ -1,9 +1,5 @@
 #pragma once
 
-#include "domain.h"
-#include "geo.h"
-#include "svg.h"
-
 #include <algorithm>
 #include <cstdint>
 #include <cstdlib>
@@ -12,6 +8,10 @@
 #include <set>
 #include <type_traits>
 #include <vector>
+
+#include "domain.h"
+#include "geo.h"
+#include "svg.h"
 
 namespace renderer {
 inline const double EPSILON = 1e-6;
@@ -23,8 +23,7 @@ public:
     template <typename PointInputIt>
     SphereProjector(PointInputIt points_begin, PointInputIt points_end,
                     double max_width, double max_height, double padding)
-        : padding_(padding) //
-    {
+        : padding_(padding) {
         // Если точки поверхности сферы не заданы, вычислять нечего
         if (points_begin == points_end) {
             return;
